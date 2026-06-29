@@ -270,7 +270,7 @@ class Matrix:
         
         for k in range(self.rows):
             pivot = left[k][k]
-
+            
             if pivot == 0:
                 found = False
                 for i in range(k+1,self.rows):
@@ -292,6 +292,7 @@ class Matrix:
             
             # pivot 열의 다른 행들을 0으로 만든다.
             # left에 한 행 연산을 right에도 똑같이 적용해야 한다.
+            #pivot 위아래 행 모두 0이 되게 한다.
             for i in range(self.rows): #행기준
                 if i != k:
                     factor = left[i][k]
