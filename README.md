@@ -30,7 +30,7 @@ Python으로 구현한 행렬 연산 클래스.
 ```bash
 python3 test_matrix.py
 
----
+
 
 
 
