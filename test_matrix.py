@@ -273,6 +273,214 @@ def test_solve_unique():
     print("Solve unique tests passed.")
 
 
+def test_analyze_system():
+    A = Matrix([
+        [1, 2],
+        [3, 4]
+    ])
+
+    b = Matrix([
+        [5],
+        [11]
+    ])
+
+    status, rref_augmented = A.analyze_system(b)
+    assert status == "unique"
+
+
+    no_solution_A = Matrix([
+        [1, 1],
+        [2, 2]
+    ])
+
+    no_solution_b = Matrix([
+        [3],
+        [7]
+    ])
+
+    status, rref_augmented = no_solution_A.analyze_system(no_solution_b)
+    assert status == "no solution"
+
+
+    infinite_A = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    infinite_b = Matrix([
+        [3],
+        [6]
+    ])
+
+    status, rref_augmented = infinite_A.analyze_system(infinite_b)
+    assert status == "infinite solutions"
+
+    print("Analyze system tests passed.")
+
+def test_has_solution():
+    # 유일해가 있으므로 True
+    A = Matrix([
+        [1, 2],
+        [3, 4]
+    ])
+
+    b = Matrix([
+        [5],
+        [11]
+    ])
+
+    assert A.has_solution(b) == True
+
+
+    # 해가 없으므로 False
+    no_solution_A = Matrix([
+        [1, 1],
+        [2, 2]
+    ])
+
+    no_solution_b = Matrix([
+        [3],
+        [7]
+    ])
+
+    assert no_solution_A.has_solution(no_solution_b) == False
+
+
+    # 무한히 많은 해가 있으므로 True
+    infinite_A = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    infinite_b = Matrix([
+        [3],
+        [6]
+    ])
+
+    assert infinite_A.has_solution(infinite_b) == True
+
+    print("Has solution tests passed.")
+
+
+def test_least_squares():
+    # 1. 정확한 해가 없는 tall matrix
+    # y ≈ c + mx 형태의 직선 fitting
+    A = Matrix([
+        [1, 1],
+        [1, 2],
+        [1, 3]
+    ])
+
+    b = Matrix([
+        [1],
+        [2],
+        [2]
+    ])
+
+    # 최소제곱해:
+    # c = 2/3, m = 1/2
+    expected = Matrix([
+        [2 / 3],
+        [1 / 2]
+    ])
+
+    assert A.least_squares(b) == expected
+
+
+    # 2. 정확한 해가 있는 경우에도 least squares는 같은 해를 반환해야 함
+    B = Matrix([
+        [1, 0],
+        [0, 1],
+        [1, 1]
+    ])
+
+    c = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    expected_c = Matrix([
+        [1],
+        [2]
+    ])
+
+    assert B.least_squares(c) == expected_c
+
+
+    # 3. b가 열벡터가 아닌 경우
+    wrong_b = Matrix([
+        [1, 2, 3]
+    ])
+
+    assert_raises(ValueError, lambda: A.least_squares(wrong_b))
+
+
+    # 4. b의 행 개수가 A와 다른 경우
+    wrong_rows_b = Matrix([
+        [1],
+        [2]
+    ])
+
+    assert_raises(ValueError, lambda: A.least_squares(wrong_rows_b))
+
+
+    # 5. A의 열들이 선형종속이면 A^T A가 singular라서 유일한 least squares 해를 못 구함
+    singular_A = Matrix([
+        [1, 2],
+        [2, 4],
+        [3, 6]
+    ])
+
+    singular_b = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    assert_raises(ValueError, lambda: singular_A.least_squares(singular_b))
+
+    print("Least squares tests passed.")
+
+def test_projection_and_residual():
+    A = Matrix([
+        [1, 1],
+        [1, 2],
+        [1, 3]
+    ])
+
+    b = Matrix([
+        [1],
+        [2],
+        [2]
+    ])
+
+    # least squares 해:
+    # x_hat = [2/3, 1/2]
+    #
+    # projection = A x_hat
+    # row1: 2/3 + 1/2 = 7/6
+    # row2: 2/3 + 1   = 5/3
+    # row3: 2/3 + 3/2 = 13/6
+    expected_projection = Matrix([
+        [7 / 6],
+        [5 / 3],
+        [13 / 6]
+    ])
+
+    assert A.project_column_space(b) == expected_projection
+
+    # residual = b - projection
+    expected_residual = Matrix([
+        [1 - 7 / 6],
+        [2 - 5 / 3],
+        [2 - 13 / 6]
+    ])
+
+    assert A.residual(b) == expected_residual
+
+    print("Projection and residual tests passed.")
+
 
 
 
@@ -286,7 +494,10 @@ def run_all_tests():
     test_rref()
     test_solve_unique()
     test_errors()
-
+    test_has_solution()
+    test_analyze_system()
+    test_least_squares()
+    test_projection_and_residual()
     
 
     print("\nall tests passed")

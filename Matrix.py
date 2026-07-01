@@ -416,39 +416,14 @@ class Matrix:
     
     def solve_unique(self,b):
         eps = 1e-10
-
-        if not isinstance(b,Matrix):
-            raise TypeError("b must be a Matrix")
-        
-        if b.cols != 1:
-            raise ValueError("b must be a column vector. ")
-        
-        augmented = self.augment(b)
-        rref_augmented = augmented.rref()
-        C = rref_augmented.data
-
-        pivot_count = 0
-        for i in range(self.rows):
-            
-            for j in range(self.cols):
-                if abs(C[i][j]) > eps:
-                    pivot_count += 1
-                    break
-        
-        if pivot_count != self.cols:
+        stauts, rref_augmented = self.analyze_system(b)
+        if stauts != "unique":
             raise ValueError("The system does not have a unique solution.")
         
-        for i in range(self.rows):
-            all_zero = True
-            for j in range(self.cols):
-                if abs(C[i][j]) >eps:
-                    all_zero = False
-                    break
+        C = rref_augmented.data
+
         
-            if all_zero and abs(C[i][-1])>eps:
-                raise ValueError("The system has no solution.")
-            
-        
+        #마지막 열에서 해 꺼내기
         solution = [[0] for _ in range(self.cols)]
 
         for i in range(self.rows):
@@ -462,6 +437,87 @@ class Matrix:
                 solution[pivot_col][0] = C[i][-1]
                 
         return Matrix(solution)
+    
+    def analyze_system(self,b):
+        if not isinstance(b,Matrix):
+            raise TypeError("b must be a Matrix")
+        
+        if b.cols != 1:
+            raise ValueError("b must be a column vector. ")
+        
+        eps = 1e-10
+        augmented = self.augment(b)
+
+        rref_augmented = augmented.rref()
+
+        C = rref_augmented.data
+
+        # 모순 행 검사.
+        # [0 0 ... 0 | Nonzero] 형태면 0 = Nonzero 이므로 해가 없다.
+        for i in range(self.rows):
+            all_zero = True
+            for j in range(self.cols):
+                if abs(C[i][j]) > eps:
+                    all_zero = False
+                    break
+            
+            if all_zero and abs(C[i][-1])>eps: 
+                return ("no solution",rref_augmented)
+        
+        #pivot 개수 세기
+        #모든 변수 열에 pivot이 있어야 자유변수가 없고 유일해 가능.
+        pivot_count = 0
+
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if abs(C[i][j]) > eps:
+                    pivot_count += 1
+                    break
+        
+        if pivot_count == self.cols:
+            return ("unique",rref_augmented)
+        
+        else:
+            return ("infinite solutions",rref_augmented)
+        
+    
+    def has_solution(self, b):
+        status,_ = self.analyze_system(b)
+        return status != "no solution"
+    
+
+    def least_squares(self,b):
+        if not isinstance(b, Matrix):
+            raise TypeError("b must be a Matrix.")
+    
+        if b.cols != 1:
+            raise ValueError("b must be a column vector.")
+    
+        if self.rows != b.rows:
+            raise ValueError("A and b must have the same number of rows.")
+
+        # normal equation
+        # ATAx_hat = ATb
+        At = self.transpose()
+        normal_A = At @ self
+        normal_b = At @ b
+        x_hat = normal_A.solve_unique(normal_b)
+
+        return x_hat
+    
+    def project_column_space(self,b):
+        # A의 열의 선형결합중 b에 가장 가까운 백터
+        # == 원래 벡터 b를 어떤 공간 안에서 가장 비슷하게 표현한 벡터
+        x_hat = self.least_squares(b)
+
+        return self @ x_hat
+    # 오차 계산 함수
+    def residual(self,b):
+        
+        projection = self.project_column_space(b)
+        return b - projection
+
+
 
             
 
