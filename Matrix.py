@@ -338,6 +338,52 @@ class Matrix:
 
         return Matrix(C)
     
+    def rref(self):
+        C = self._copy_data()
+
+        eps = 1e-10  #float형의 부동소수점 오차를 방지하기 위함.
+        row = 0
+
+        for col in range(self.cols):
+
+            if row == self.rows:
+                break
+
+            pivot_row = None
+            found = False
+
+            #0이 아닌 pivot행을 찾는다.
+            for i in range(row,self.rows):
+                if abs(C[i][col]) > eps:
+                    pivot_row = i
+                    found = True
+                    break
+
+            #만약 찾지 못했다면 다음 열을 확인한다.
+            if not found:
+                continue
+            
+            C[pivot_row],C[row] = C[row],C[pivot_row]
+
+            pivot = C[row][col]
+            
+            #pivot 값을 1로 만들어 준다.
+            for j in range(self.cols):
+                C[row][j] /= pivot
+
+
+            for i in range(self.rows):
+                if i != row:
+                    factor = C[i][col]
+
+                    for j in range(self.cols):
+                        C[i][j] -= factor*C[row][j]
+            #전 행에서 pivot을 정했던 행은 제외
+            row += 1
+        
+        return Matrix(C)
+                
+    
     def rank(self): #row echelon을 이용한 rank 계산.
         Row_Echelon = self.row_echelon()
         rank_count = 0
@@ -353,75 +399,74 @@ class Matrix:
                 rank_count += 1
         
         return rank_count
+    
+
+    def augment(self,other):
+        if not isinstance(other,Matrix):
+            raise TypeError("Other must be a Matrix")
+        if self.rows != other.rows:
+            raise ValueError("Matrices must be the same number of rows to agument.")
+        
+        result = []
+
+        for i in range(self.rows):
+            result.append(self.data[i] + other.data[i])
+        
+        return Matrix(result)
+    
+    def solve_unique(self,b):
+        eps = 1e-10
+
+        if not isinstance(b,Matrix):
+            raise TypeError("b must be a Matrix")
+        
+        if b.cols != 1:
+            raise ValueError("b must be a column vector. ")
+        
+        augmented = self.augment(b)
+        rref_augmented = augmented.rref()
+        C = rref_augmented.data
+
+        pivot_count = 0
+        for i in range(self.rows):
+            
+            for j in range(self.cols):
+                if abs(C[i][j]) > eps:
+                    pivot_count += 1
+                    break
+        
+        if pivot_count != self.cols:
+            raise ValueError("The system does not have a unique solution.")
+        
+        for i in range(self.rows):
+            all_zero = True
+            for j in range(self.cols):
+                if abs(C[i][j]) >eps:
+                    all_zero = False
+                    break
+        
+            if all_zero and abs(C[i][-1])>eps:
+                raise ValueError("The system has no solution.")
+            
+        
+        solution = [[0] for _ in range(self.cols)]
+
+        for i in range(self.rows):
+            pivot_col = None
+            for j in range(self.cols):
+                if abs(C[i][j]) > eps:
+                    pivot_col = j
+                    break
+            
+            if pivot_col is not None:
+                solution[pivot_col][0] = C[i][-1]
+                
+        return Matrix(solution)
+
+            
 
         
         
-    
-    
-    
-
-    
-
-    
-
-
-
-
-    
-        
-    
-
-    
-    
-    
-        
-
-        
-
-
-
-    
-
-
-        
-        
-
-       
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     
 
 

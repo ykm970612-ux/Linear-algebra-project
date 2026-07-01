@@ -98,6 +98,35 @@ def test_row_echelon():
 
     print("row echelon passed")
 
+def test_rref():
+    A = Matrix([
+        [1, 2, 3],
+        [4, 5, 6]
+    ])
+
+    expected = Matrix([
+        [1, 0, -1],
+        [0, 1, 2]
+    ])
+
+    assert A.rref() == expected
+
+    B = Matrix([
+        [1, 2, 3],
+        [2, 4, 6],
+        [3, 6, 9]
+    ])
+
+    expected_B = Matrix([
+        [1, 2, 3],
+        [0, 0, 0],
+        [0, 0, 0]
+    ])
+
+    assert B.rref() == expected_B
+
+    print("RREF tests passed.")
+
 
 def assert_raises(error_type, func):
     try:
@@ -134,6 +163,115 @@ def test_sigular_rank():
 
     print("singula and rank passed")
 
+def test_solve_unique():
+    # 1. 정사각행렬: 유일해 존재
+    A = Matrix([
+        [1, 2],
+        [3, 4]
+    ])
+
+    b = Matrix([
+        [5],
+        [11]
+    ])
+
+    expected = Matrix([
+        [1],
+        [2]
+    ])
+
+    assert A.solve_unique(b) == expected
+
+
+    # 2. 다른 정사각행렬: 유일해 존재
+    B = Matrix([
+        [2, 1],
+        [5, 3]
+    ])
+
+    c = Matrix([
+        [1],
+        [2]
+    ])
+
+    expected_c = Matrix([
+        [1],
+        [-1]
+    ])
+
+    assert B.solve_unique(c) == expected_c
+
+
+    # 3. tall matrix: 방정식은 3개, 변수는 2개지만 유일해 존재
+    # x = 1, y = 2를 만족하는 시스템
+    C = Matrix([
+        [1, 0],
+        [0, 1],
+        [1, 1]
+    ])
+
+    d = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    expected_d = Matrix([
+        [1],
+        [2]
+    ])
+
+    assert C.solve_unique(d) == expected_d
+
+
+    # 4. 해 없음: 0 = 1 같은 모순 발생
+    no_solution_A = Matrix([
+        [1, 1],
+        [2, 2]
+    ])
+
+    no_solution_b = Matrix([
+        [3],
+        [7]
+    ])
+
+    assert_raises(ValueError, lambda: no_solution_A.solve_unique(no_solution_b))
+
+
+    # 5. 무한히 많은 해: pivot이 모든 변수 열에 없음
+    infinite_A = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    infinite_b = Matrix([
+        [3],
+        [6]
+    ])
+
+    assert_raises(ValueError, lambda: infinite_A.solve_unique(infinite_b))
+
+
+    # 6. b가 열벡터가 아님
+    wrong_b = Matrix([
+        [1, 2]
+    ])
+
+    assert_raises(ValueError, lambda: A.solve_unique(wrong_b))
+
+
+    # 7. b의 행 개수가 A와 다름
+    wrong_rows_b = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    assert_raises(ValueError, lambda: A.solve_unique(wrong_rows_b))
+
+
+    print("Solve unique tests passed.")
+
 
 
 
@@ -145,7 +283,11 @@ def run_all_tests():
     test_determinant_inverse_rank()
     test_row_echelon()
     test_sigular_rank()
+    test_rref()
+    test_solve_unique()
     test_errors()
+
+    
 
     print("\nall tests passed")
 
