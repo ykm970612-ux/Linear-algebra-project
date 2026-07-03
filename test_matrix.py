@@ -482,6 +482,192 @@ def test_projection_and_residual():
     print("Projection and residual tests passed.")
 
 
+def test_dot():
+    u = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    v = Matrix([
+        [4],
+        [5],
+        [6]
+    ])
+
+    assert u.dot(v) == 32
+
+
+    # 행벡터끼리도 가능해야 함
+    row_u = Matrix([
+        [1, 2, 3]
+    ])
+
+    row_v = Matrix([
+        [4, 5, 6]
+    ])
+
+    assert row_u.dot(row_v) == 32
+
+
+    # 행벡터와 열벡터도 원소 개수가 같으면 가능
+    assert row_u.dot(v) == 32
+
+
+    # 길이가 다르면 에러
+    short_v = Matrix([
+        [1],
+        [2]
+    ])
+
+    assert_raises(ValueError, lambda: u.dot(short_v))
+
+
+    # 일반 행렬은 dot 불가능
+    A = Matrix([
+        [1, 2],
+        [3, 4]
+    ])
+
+    assert_raises(ValueError, lambda: A.dot(u))
+
+    print("Dot tests passed.")
+
+
+
+def test_from_columns():
+    c1 = Matrix([
+        [1],
+        [3],
+        [5]
+    ])
+
+    c2 = Matrix([
+        [2],
+        [4],
+        [6]
+    ])
+
+    expected = Matrix([
+        [1, 2],
+        [3, 4],
+        [5, 6]
+    ])
+
+    assert Matrix.from_columns([c1, c2]) == expected
+
+
+    # 열벡터가 하나만 있어도 가능
+    assert Matrix.from_columns([c1]) == c1
+
+
+    # 빈 리스트는 불가능
+    assert_raises(ValueError, lambda: Matrix.from_columns([]))
+
+
+    # columns는 리스트여야 함
+    assert_raises(TypeError, lambda: Matrix.from_columns(c1))
+
+
+    # 각 원소는 Matrix여야 함
+    assert_raises(TypeError, lambda: Matrix.from_columns([c1, [2, 4, 6]]))
+
+
+    # 열벡터가 아니면 불가능
+    row_vector = Matrix([
+        [1, 2, 3]
+    ])
+
+    assert_raises(ValueError, lambda: Matrix.from_columns([c1, row_vector]))
+
+
+    # 행 개수가 다르면 불가능
+    short_col = Matrix([
+        [1],
+        [2]
+    ])
+
+    assert_raises(ValueError, lambda: Matrix.from_columns([c1, short_col]))
+
+    print("From columns tests passed.")
+
+def test_gram_schmidt():
+    # 이미 직교정규인 경우
+    A = Matrix([
+        [1, 0],
+        [0, 1]
+    ])
+
+    Q = A.gram_schmidt()
+
+    expected = Matrix([
+        [1, 0],
+        [0, 1]
+    ])
+
+    assert Q == expected
+
+
+    # 일반적인 선형독립 열벡터
+    B = Matrix([
+        [1, 1],
+        [1, 0],
+        [0, 1]
+    ])
+
+    Q = B.gram_schmidt()
+
+    q1 = Q.get_column(0)
+    q2 = Q.get_column(1)
+
+    assert abs(q1.dot(q2)) < 1e-10
+    assert abs(q1.frobenius_norm() - 1) < 1e-10
+    assert abs(q2.frobenius_norm() - 1) < 1e-10
+
+
+    # 선형종속 열벡터는 Gram-Schmidt 불가능
+    C = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    assert_raises(ValueError, lambda: C.gram_schmidt())
+
+    print("Gram-Schmidt tests passed.")
+
+def test_qr_decomposition():
+    A = Matrix([
+        [1, 1],
+        [1, 0],
+        [0, 1]
+    ])
+
+    Q, R = A.qr_decomposition()
+
+    q1 = Q.get_column(0)
+    q2 = Q.get_column(1)
+
+    # Q의 열벡터들은 서로 수직이어야 함
+    assert abs(q1.dot(q2)) < 1e-10
+
+    # Q의 열벡터들은 길이가 1이어야 함
+    assert abs(q1.frobenius_norm() - 1) < 1e-10
+    assert abs(q2.frobenius_norm() - 1) < 1e-10
+
+    # A = Q @ R 이어야 함
+    assert Q @ R == A
+
+
+    # 선형종속 열벡터는 QR 분해 불가능
+    B = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    assert_raises(ValueError, lambda: B.qr_decomposition())
+
+    print("QR decomposition tests passed.")
+
 
 
 def run_all_tests():
@@ -498,6 +684,10 @@ def run_all_tests():
     test_analyze_system()
     test_least_squares()
     test_projection_and_residual()
+    test_from_columns()
+    test_dot()
+    test_gram_schmidt()
+    test_qr_decomposition()
     
 
     print("\nall tests passed")

@@ -94,6 +94,14 @@ class Matrix:
         
         return False
     
+    def frobenius_norm(self):
+        total = 0
+        for i in range(self.rows):
+            for j in range(self.cols):
+                total += self.data[i][j]**2
+
+        return total**0.5
+    
     def can_multiply(self,other): 
         
         if not isinstance(other, Matrix):
@@ -511,11 +519,188 @@ class Matrix:
         x_hat = self.least_squares(b)
 
         return self @ x_hat
-    # 오차 계산 함수
+    
     def residual(self,b):
-        
+        # 오차 계산 함수
+            
         projection = self.project_column_space(b)
         return b - projection
+    
+
+    def residual_norm(self,b):
+        return self.frobenius_norm(self.residual(b))
+    
+    def is_vector(self):
+        return self.rows == 1 or self.cols == 1
+    
+    #백터를 리스트로 변환한다.
+    def _to_vector_list(self):
+        if not self.is_vector():
+            raise ValueError("Matrix is not a vector.")
+        
+        values = []
+
+        for i in range(self.rows):
+            for j in range(self.cols):
+                values.append(self.data[i][j])
+
+        return values
+    
+    #백터 곱 연산
+    def dot(self,other):
+        if not isinstance(other,Matrix):
+            raise TypeError("other must be a Matrix")
+        
+        if not self.is_vector or not other.is_vector():
+           raise ValueError("Dot product is only defined for vectors.")
+        
+        u = self._to_vector_list()
+        v = other._to_vector_list()
+
+        if len(u) != len(v):
+            raise ValueError("Vectors must have the same size.")
+        
+        total = 0
+
+        for i in range(len(u)):
+            total += u[i] * v[i]
+
+        return total
+    
+
+    def normalize(self):
+        if not self.is_vector():
+            raise ValueError("Normalize is only defined for vectors.")
+        
+        norm = self.frobenius_norm()
+
+        if abs(norm) < 1e-10:
+            raise ValueError("Zero vector cannot be normalized.")
+        
+        return self.scalar_multiply(1/norm)
+    
+    #행렬에서 특정 인덱스 열백터만 추출
+    def get_column(self,col_index):
+        if not isinstance(col_index,int) or isinstance(col_index,bool):
+            raise TypeError("Column index must be an integer.")
+        
+        if col_index < 0 or col_index >= self.cols:
+            raise IndexError("Column index out of range.")
+        
+        column = []
+
+        for i in range(self.rows):
+            column.append([self.data[i][col_index]])
+
+        return Matrix(column)
+    
+    #열백터들을 다시 행렬로 결합.
+    @staticmethod
+    def from_columns(columns):
+        if not isinstance(columns, list):
+            raise TypeError("columns must be a list.")
+
+        if not columns:
+            raise ValueError("columns cannot be empty.")
+        
+
+        for col in columns:
+            if not isinstance(col, Matrix):
+                raise TypeError("Each column must be a Matrix.")
+            #열백터의 열길이는 1.
+            if col.cols != 1:
+                raise ValueError("Each column must be a column vector.")
+            
+        row_size = columns[0].rows
+
+        #열백터들은 행길이가 동일해야함.
+        for col in columns:
+            if col.rows != row_size:
+                raise ValueError("All columns must have the same number of rows.")
+        
+        
+        result = []
+        #열백터들의 첫번째 요소만 추출한다.
+        for i in range(row_size):
+            row = []
+
+            for col in columns:
+                row.append(col.data[i][0])
+            
+            result.append(row)
+        
+        return Matrix(result)
+    
+    #그램-슈미트 알고리즘
+    def gram_schmidt(self):
+        if not self.is_full_column_rank():
+            raise ValueError("Columns must be linearly independent.")
+
+        eps = 1e-10
+
+        column_vectors = []
+        
+        for col in range(self.cols):
+            v = self.get_column(col)
+
+            for q in column_vectors:
+                factor = v.dot(q)
+                projection = q.scalar_multiply(factor)
+                v = v -  projection
+            #한 백터가 다른백터로 표현가능하기에 선형종속
+            if v.frobenius_norm() < eps:
+                raise ValueError("Columns are linearly dependent.")
+            
+            q = v.normalize()
+
+            column_vectors.append(q)
+        
+        return Matrix.from_columns(column_vectors)
+    
+    def is_full_column_rank(self):
+        return self.rank() == self.cols
+    
+    def qr_decomposition(self):
+        #열백터들이 선형독립인지 확인.
+        if not self.is_full_column_rank():
+            raise ValueError("Columns must be linearly independent.")
+        # A = QR
+        #R = QtA
+        Q = self.gram_schmidt()
+        R = Q.transpose() @ self
+        
+        return Q,R
+    
+
+    
+
+
+        
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+            
+        
+
+
+
+    
+
+    
+
+    
 
 
 
