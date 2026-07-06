@@ -1,4 +1,6 @@
 class Matrix:
+    EPS = 1e-10
+
     def __init__(self,A):
         self._validate_matrix(A)
 
@@ -90,10 +92,8 @@ class Matrix:
         return (self.rows,self.cols)
     
     def is_square(self): 
-        if self.rows == self.cols:
-            return True
-        
-        return False
+        return self.rows == self.cols
+            
     
     def frobenius_norm(self):
         total = 0
@@ -108,17 +108,17 @@ class Matrix:
         if not isinstance(other, Matrix):
             raise TypeError("other must be a Matrix")
 
-        if self.cols == other.rows:
-            return True
+        return self.cols == other.rows
+            
     
-        return False
     def same_shape(self,other): 
         if not isinstance(other, Matrix):
             raise TypeError("other must be a Matrix")
-        if self.shape() == other.shape() :
-            return True
+        
+        return self.shape() == other.shape() 
+            
     
-        return False
+        
 
     
     
@@ -232,12 +232,11 @@ class Matrix:
             raise ValueError("The determinant must be a square matrix.")
         C = self._copy_data()
         sign = 1
-        eps = 1e-10 #부동소수점 오차 방지를 위한 eps
         for k in range(self.rows):
             pivot = C[k][k] 
 
             #현재 열에서 0이 아닌 pivot 행을 찾는다.
-            if abs(pivot) < eps: # float형 부동소수점오차를 방지하기 위한 eps. 
+            if abs(pivot) < self.EPS: # float형 부동소수점오차를 방지하기 위한 eps. 
                 found = False
                 for i in range(k+1,self.rows):
                     #만약 0이 아니라면 행교환을 하여 pivot행을 0이 아닌 값으로 수정한다.
@@ -295,7 +294,7 @@ class Matrix:
                 if not found:
                     raise ValueError("The inverse matrix does not exist" \
                     " because the determinant is zero.")
-            #pivot 행을 pivot으로 나누어 pivot값을 0으로 만든다.
+            #pivot 행을 pivot으로 나누어 pivot값을 1로 만든다.
             for j in range(self.rows):
                 left[k][j] = left[k][j] / pivot
                 right[k][j] = right[k][j] / pivot
@@ -315,7 +314,6 @@ class Matrix:
     def row_echelon(self): # REF
         C = self._copy_data()
         
-        eps =  1e-10 #float형의 부동소수점 오차를 방지하기 위함.
         row = 0
 
         for col in range(self.cols):
@@ -326,7 +324,7 @@ class Matrix:
             found = False
             #0이 아닌 pivot행을 찾는다.
             for i in range(row,self.rows):
-                if abs(C[i][col]) > eps:
+                if abs(C[i][col]) > self.EPS:
                     found = True
                     pivot_row = i
                     break
@@ -351,7 +349,6 @@ class Matrix:
     def rref(self):
         C = self._copy_data()
 
-        eps = 1e-10  #float형의 부동소수점 오차를 방지하기 위함.
         row = 0
 
         for col in range(self.cols):
@@ -364,7 +361,7 @@ class Matrix:
 
             #0이 아닌 pivot행을 찾는다.
             for i in range(row,self.rows):
-                if abs(C[i][col]) > eps:
+                if abs(C[i][col]) > self.EPS:
                     pivot_row = i
                     found = True
                     break
@@ -402,7 +399,7 @@ class Matrix:
             found = False
             #0이 아닌 행의 수가 rank
             for j in range(self.cols):
-                if Row_Echelon.data[i][j] != 0:
+                if abs(Row_Echelon.data[i][j]) > self.EPS:
                     found = True
                     break
             if found:
@@ -426,9 +423,8 @@ class Matrix:
         return Matrix(result)
     
     def solve_unique(self,b):
-        eps = 1e-10
-        stauts, rref_augmented = self.analyze_system(b)
-        if stauts != "unique":
+        status, rref_augmented = self.analyze_system(b)
+        if status != "unique":
             raise ValueError("The system does not have a unique solution.")
         
         C = rref_augmented.data
@@ -440,7 +436,7 @@ class Matrix:
         for i in range(self.rows):
             pivot_col = None
             for j in range(self.cols):
-                if abs(C[i][j]) > eps:
+                if abs(C[i][j]) > self.EPS:
                     pivot_col = j
                     break
             
@@ -456,7 +452,6 @@ class Matrix:
         if b.cols != 1:
             raise ValueError("b must be a column vector. ")
         
-        eps = 1e-10
         augmented = self.augment(b)
 
         rref_augmented = augmented.rref()
@@ -468,11 +463,11 @@ class Matrix:
         for i in range(self.rows):
             all_zero = True
             for j in range(self.cols):
-                if abs(C[i][j]) > eps:
+                if abs(C[i][j]) > self.EPS:
                     all_zero = False
                     break
             
-            if all_zero and abs(C[i][-1])>eps: 
+            if all_zero and abs(C[i][-1])>self.EPS: 
                 return ("no solution",rref_augmented)
         
         #pivot 개수 세기
@@ -481,7 +476,7 @@ class Matrix:
 
         for i in range(self.rows):
             for j in range(self.cols):
-                if abs(C[i][j]) > eps:
+                if abs(C[i][j]) > self.EPS:
                     pivot_count += 1
                     break
         
@@ -578,7 +573,7 @@ class Matrix:
         
         norm = self.frobenius_norm()
 
-        if abs(norm) < 1e-10:
+        if abs(norm) < self.EPS:
             raise ValueError("Zero vector cannot be normalized.")
         
         return self.scalar_multiply(1/norm)
@@ -640,8 +635,6 @@ class Matrix:
         if not self.is_full_column_rank():
             raise ValueError("Columns must be linearly independent.")
 
-        eps = 1e-10
-
         column_vectors = []
         
         for col in range(self.cols):
@@ -652,7 +645,7 @@ class Matrix:
                 projection = q.scalar_multiply(factor)
                 v = v -  projection
             #한 백터가 다른백터로 표현가능하기에 선형종속
-            if v.frobenius_norm() < eps:
+            if v.frobenius_norm() < self.EPS:
                 raise ValueError("Columns are linearly dependent.")
             
             q = v.normalize()
@@ -679,11 +672,11 @@ class Matrix:
         
         if not self.is_square():
             raise ValueError("Upper Triangular Matrix must be square. ")
-        eps = 1e-10
+    
         # 상삼각행렬 -> 행 인덱스가 열 인덱스가 큰 구간에서 0
         for i in range(self.rows):
             for j in range(i):
-                if abs(self.data[i][j]) > eps:
+                if abs(self.data[i][j]) > self.EPS:
                     return False
         
 
@@ -691,11 +684,10 @@ class Matrix:
     
     def is_orthonormal(self):
 
-        eps = 1e-10
         columns  = []
         for j in range(self.cols):
             v = self.get_column(j)
-            if abs(v.frobenius_norm() - 1) > eps:
+            if abs(v.frobenius_norm() - 1) > self.EPS:
                 return False
             
             columns.append(v)
@@ -703,7 +695,7 @@ class Matrix:
         for i in range(self.cols):
             v = columns[i]
             for j in range(i+1,self.cols):
-                if abs(v.dot(columns[j]))>eps:
+                if abs(v.dot(columns[j]))>self.EPS:
                     return False
         
         return True
