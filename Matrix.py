@@ -43,7 +43,7 @@ class Matrix:
 
         return C   
 
-    # special(dunder) method
+    # special(dunder) method ---------------------------------
        
     def __eq__(self, other): # 객체끼리 비교할때 서로 다른 객체이면 False를 반환하기에 dunder로 수정한다. 
         if not isinstance(other,Matrix):
@@ -83,6 +83,7 @@ class Matrix:
     def __rmul__(self, c):
         return self.scalar_multiply(c)
 
+    
      
     
     def shape(self): 
@@ -155,7 +156,7 @@ class Matrix:
 
         return Matrix(C)
         
-
+    # Basic Matrix Operations ---------------------------------
     
     def add(self,other): 
         if not self.same_shape(other):
@@ -224,6 +225,7 @@ class Matrix:
         
         return Matrix(C)
     
+    # Matrix Properties ---------------------------------
 
     def determinant(self): #가우스 소거법 기반으로 대각성분을 곱해 행렬식을 구한다.
         if not self.is_square(): # 정사각행렬만 행렬식을 구할 수 있다.
@@ -408,6 +410,7 @@ class Matrix:
         
         return rank_count
     
+    # Linear Systems ---------------------------------
 
     def augment(self,other):
         if not isinstance(other,Matrix):
@@ -493,6 +496,7 @@ class Matrix:
         status,_ = self.analyze_system(b)
         return status != "no solution"
     
+    # Least Squares -------------------------
 
     def least_squares(self,b):
         if not isinstance(b, Matrix):
@@ -676,7 +680,7 @@ class Matrix:
         if not self.is_square():
             raise ValueError("Upper Triangular Matrix must be square. ")
         eps = 1e-10
-        
+        # 상삼각행렬 -> 행 인덱스가 열 인덱스가 큰 구간에서 0
         for i in range(self.rows):
             for j in range(i):
                 if abs(self.data[i][j]) > eps:
@@ -686,6 +690,7 @@ class Matrix:
         return True
     
     def is_orthonormal(self):
+
         eps = 1e-10
         columns  = []
         for j in range(self.cols):
@@ -694,7 +699,7 @@ class Matrix:
                 return False
             
             columns.append(v)
-
+        # 다른 백터와 곱했을때 0
         for i in range(self.cols):
             v = columns[i]
             for j in range(i+1,self.cols):
@@ -702,6 +707,8 @@ class Matrix:
                     return False
         
         return True
+
+
 
 
             
