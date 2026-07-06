@@ -114,7 +114,7 @@ class Matrix:
     def same_shape(self,other): 
         if not isinstance(other, Matrix):
             raise TypeError("other must be a Matrix")
-        if self.shape() == other.shape()  :
+        if self.shape() == other.shape() :
             return True
     
         return False
@@ -513,7 +513,7 @@ class Matrix:
 
         return x_hat
     
-    def project_column_space(self,b):
+    def least_squares_prediction(self,b):
         # A의 열의 선형결합중 b에 가장 가까운 백터
         # == 원래 벡터 b를 어떤 공간 안에서 가장 비슷하게 표현한 벡터
         x_hat = self.least_squares(b)
@@ -523,12 +523,12 @@ class Matrix:
     def residual(self,b):
         # 오차 계산 함수
             
-        projection = self.project_column_space(b)
+        projection = self.least_squares_prediction(b)
         return b - projection
     
 
     def residual_norm(self,b):
-        return self.frobenius_norm(self.residual(b))
+        return self.residual(b).frobenius_norm()
     
     def is_vector(self):
         return self.rows == 1 or self.cols == 1
@@ -551,7 +551,7 @@ class Matrix:
         if not isinstance(other,Matrix):
             raise TypeError("other must be a Matrix")
         
-        if not self.is_vector or not other.is_vector():
+        if not self.is_vector() or not other.is_vector():
            raise ValueError("Dot product is only defined for vectors.")
         
         u = self._to_vector_list()
@@ -665,14 +665,53 @@ class Matrix:
         if not self.is_full_column_rank():
             raise ValueError("Columns must be linearly independent.")
         # A = QR
-        #R = QtA
+        # R = QtA
         Q = self.gram_schmidt()
         R = Q.transpose() @ self
         
         return Q,R
     
+    def is_upper_triangular(self):
+        
+        if not self.is_square():
+            raise ValueError("Upper Triangular Matrix must be square. ")
+        eps = 1e-10
+        
+        for i in range(self.rows):
+            for j in range(i):
+                if abs(self.data[i][j]) > eps:
+                    return False
+        
+
+        return True
+    
+    def is_orthonormal(self):
+        eps = 1e-10
+        columns  = []
+        for j in range(self.cols):
+            v = self.get_column(j)
+            if abs(v.frobenius_norm() - 1) > eps:
+                return False
+            
+            columns.append(v)
+
+        for i in range(self.cols):
+            v = columns[i]
+            for j in range(i+1,self.cols):
+                if abs(v.dot(columns[j]))>eps:
+                    return False
+        
+        return True
+
+
+            
+            
+
+
 
     
+
+
 
 
         
