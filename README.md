@@ -68,11 +68,14 @@ Python으로 직접 구현한 행렬 연산 및 선형대수 알고리즘 라이
 ├── Matrix.py
 ├── test_matrix.py
 └── README.md
+```
 
 ## How to tests
 
 ```bash
 python3 test_matrix.py
+
+```
 
 ---
 
