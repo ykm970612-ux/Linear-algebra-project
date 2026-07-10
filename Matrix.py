@@ -700,6 +700,117 @@ class Matrix:
         
         return True
 
+    def is_lower_triangular(self):
+        if not self.is_square():
+            raise ValueError("Lower Triangular Matrix must be square. ")
+        
+        for i in range(self.rows):
+            for j in range(i+1,self.cols):
+                if abs(self.data[i][j]) > self.EPS:
+                    return False
+
+        return True
+    
+    def lu_decomposition(self):
+        if not self.is_square():
+            raise ValueError("Must be square. ")
+        
+        U = self._copy_data()
+        L = Matrix.identity(self.rows).data
+
+        for k in range(self.rows):
+            pivot = U[k][k]
+
+            if abs(pivot) < self.EPS:
+                raise ValueError("Zero pivot encountered. LU decomposition without row swaps is not possible.")
+            
+            for i in range(k+1,self.rows):
+                factor = U[i][k]/pivot
+                L[i][k] = factor
+
+                for j in range(k,self.cols):
+                    U[i][j] -= factor*U[k][j]
+        
+        return Matrix(L),Matrix(U)
+    
+    def back_substitution(self,b):
+        if not self.is_square():
+            raise ValueError("Must be square. ")
+        
+        if not self.is_upper_triangular():
+            raise ValueError("Must be triangular. ")
+        
+        if not isinstance(b,Matrix):
+            raise TypeError("b is must be Matrix. ")
+        
+        if b.cols != 1:
+            raise ValueError("b is must be column vector. ")
+        if b.rows != self.rows:
+            raise ValueError("")
+        
+        x = [[1] for i in range(self.rows)]
+
+        for i in range(self.rows -1,-1,-1):
+            total = b.data[i][0]
+
+            for j in range(i+1,self.cols):
+                total -= self.data[i][j]*x[j][0]
+            
+            x[i][0] = total/self.data[i][i] 
+        
+        return Matrix(x)
+
+    def forward_substitution(self,b):
+        if not self.is_square():
+            raise ValueError("Must be square. ")
+        
+        if not self.is_lower_triangular():
+            raise ValueError("Must be triangular. ")
+        
+        if not isinstance(b,Matrix):
+            raise TypeError("b is must be Matrix. ")
+        
+        if b.cols != 1:
+            raise ValueError("b is must be column vector. ")
+        if b.rows != self.rows:
+            raise ValueError("")
+        
+        x = [[1] for i in range(self.rows)]
+
+        for i in range(self.cols):
+            total = b.data[i][0]
+            for j in range(i):
+                total -= self.data[i][j]*x[j][0]
+            
+            x[i][0] = total/self.data[i][i]
+        
+        return Matrix(x)
+    
+    
+    def solve_lu(self,b):
+        L, U = self.lu_decomposition()
+        y = L.forward_substitution(b)
+        x = U.back_substitution(y)
+
+        return x
+
+
+
+
+
+
+    
+
+    
+
+
+        
+        
+
+
+        
+
+
 
 
 

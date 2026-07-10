@@ -692,6 +692,78 @@ def test_errors():
 
     print("Error tests passed.")
 
+def test_lu_decomposition():
+    A = Matrix([
+        [2, 3],
+        [4, 7]
+    ])
+
+    L, U = A.lu_decomposition()
+
+    assert L.is_lower_triangular()
+    assert U.is_upper_triangular()
+    assert L @ U == A
+
+def test_forward_substitution():
+    L = Matrix([
+        [1, 0],
+        [2, 1]
+    ])
+
+    b = Matrix([
+        [5],
+        [11]
+    ])
+
+    expected = Matrix([
+        [5],
+        [1]
+    ])
+
+    assert L.forward_substitution(b) == expected
+
+    print("Forward substitution tests passed.")
+
+def test_back_substitution():
+    U = Matrix([
+        [2, 3],
+        [0, 1]
+    ])
+
+    b = Matrix([
+        [5],
+        [1]
+    ])
+
+    expected = Matrix([
+        [1],
+        [1]
+    ])
+
+    assert U.back_substitution(b) == expected
+
+    print("Back substitution tests passed.")
+
+def test_solve_lu():
+    A = Matrix([
+        [2, 3],
+        [4, 7]
+    ])
+
+    b = Matrix([
+        [5],
+        [11]
+    ])
+
+    expected = Matrix([
+        [1],
+        [1]
+    ])
+
+    assert A.solve_lu(b) == expected
+
+    print("Solve LU tests passed.")
+
 
 def run_all_tests():
     test_basic_operations()
@@ -715,7 +787,10 @@ def run_all_tests():
     test_is_upper_triangular()
     test_is_orthonormal()
     test_errors()
-
+    test_lu_decomposition()
+    test_forward_substitution()
+    test_back_substitution()
+    test_solve_lu()
     print("All tests passed!")
 
 
