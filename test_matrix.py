@@ -764,35 +764,31 @@ def test_solve_lu():
 
     print("Solve LU tests passed.")
 
+def test_dot_rejects_non_vector():
+    A = Matrix([
+        [1, 2],
+        [3, 4]
+    ])
 
-def run_all_tests():
-    test_basic_operations()
-    test_creation_methods()
-    test_transpose_and_multiply()
-    test_determinant_inverse_rank()
-    test_row_echelon()
-    test_rref()
-    test_augment()
-    test_solve_unique()
-    test_analyze_system()
-    test_has_solution()
-    test_least_squares()
-    test_least_squares_utilities()
-    test_frobenius_norm()
-    test_dot_and_normalize()
-    test_get_column_and_from_columns()
-    test_gram_schmidt()
-    test_is_full_column_rank()
-    test_qr_decomposition()
-    test_is_upper_triangular()
-    test_is_orthonormal()
-    test_errors()
-    test_lu_decomposition()
-    test_forward_substitution()
-    test_back_substitution()
-    test_solve_lu()
-    print("All tests passed!")
+    v = Matrix([
+       [1],
+       [2]
+    ])
+
+    assert_raises(ValueError, lambda: A.dot(v))
+    assert_raises(ValueError,lambda :v.dot(A))
+
+def test_constructor_copies_input_data():
+    data = [
+        [1, 2],
+        [3, 4]
+    ]
+    A = Matrix(data)
+    data[0][0] = 999
+    assert A.data[0][0] == 1
 
 
-if __name__ == "__main__":
-    run_all_tests()
+
+
+
+

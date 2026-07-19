@@ -5,7 +5,7 @@ class Matrix:
         self._validate_matrix(A)
 
 
-        self.data = A
+        self.data = [arr[:] for arr in A]
         self.rows = len(A)
         self.cols = len(A[0])
 
@@ -35,13 +35,7 @@ class Matrix:
     
     def _copy_data(self): #원본 행렬을 바꾸지 않기 위해 새로운 배열을 생성한다.
 
-        rows = len(self.data)
-        cols = len(self.data[0])
-        C = [[0]*cols for _ in range(rows)]
-
-        for i in range(rows):
-            for j in range(cols):
-                C[i][j] = self.data[i][j]
+        C = [arr[:] for arr in self.data]
 
         return C   
 
@@ -460,25 +454,19 @@ class Matrix:
 
         # 모순 행 검사.
         # [0 0 ... 0 | Nonzero] 형태면 0 = Nonzero 이므로 해가 없다.
+        # pivot 개수 세기
+        # 모든 변수 열에 pivot이 있어야 자유변수가 없고 유일해 가능.
+        pivot_count = 0
         for i in range(self.rows):
             all_zero = True
             for j in range(self.cols):
                 if abs(C[i][j]) > self.EPS:
                     all_zero = False
+                    pivot_count += 1
                     break
             
             if all_zero and abs(C[i][-1])>self.EPS: 
                 return ("no solution",rref_augmented)
-        
-        #pivot 개수 세기
-        #모든 변수 열에 pivot이 있어야 자유변수가 없고 유일해 가능.
-        pivot_count = 0
-
-        for i in range(self.rows):
-            for j in range(self.cols):
-                if abs(C[i][j]) > self.EPS:
-                    pivot_count += 1
-                    break
         
         if pivot_count == self.cols:
             return ("unique",rref_augmented)
@@ -712,28 +700,39 @@ class Matrix:
         return True
     
     def lu_decomposition(self):
+        # 행 교환 없는 기본 LU 분해는 정사각행렬에서만 수행.
         if not self.is_square():
             raise ValueError("Must be square. ")
         
+        # U는 가우스 소거를 통해 upper triangular matrix로 바꿔갈 행렬이다.
         U = self._copy_data()
+        # L은 소거과정에서 사용한 factor들을 저장하는 행렬이다.
         L = Matrix.identity(self.rows).data
 
         for k in range(self.rows):
             pivot = U[k][k]
 
+            # 행 교환 없는 LU에서는 pivot이 0이면 분해할 수 없다.
+            # 행 교환을 허용하면 PA = LU로 확장해야한다.
             if abs(pivot) < self.EPS:
                 raise ValueError("Zero pivot encountered. LU decomposition without row swaps is not possible.")
             
+            # k번째 pivot 아래의 성분을 0으로 만든다.
             for i in range(k+1,self.rows):
-                factor = U[i][k]/pivot
-                L[i][k] = factor
 
+                # i번째 행에서 k번째 pivot행을 몇배 빼야하는지 게산한다.
+                factor = U[i][k]/pivot
+                
+                L[i][k] = factor # <------# Ri <- Ri - factor * Rk 
+                
                 for j in range(k,self.cols):
                     U[i][j] -= factor*U[k][j]
         
         return Matrix(L),Matrix(U)
     
     def back_substitution(self,b):
+        # Upper triangular matrix U에 대해 Ux = b를 푸는 함수.
+        # U는 아래에서 위방향으로 해를 구한다.
         if not self.is_square():
             raise ValueError("Must be square. ")
         
@@ -746,21 +745,29 @@ class Matrix:
         if b.cols != 1:
             raise ValueError("b is must be column vector. ")
         if b.rows != self.rows:
-            raise ValueError("")
-        
+            raise ValueError("Matrix and b must have the same number of rows.")
+
         x = [[1] for i in range(self.rows)]
 
         for i in range(self.rows -1,-1,-1):
+            # 현재 식의 오른쪽 값에서 이미 구한 뒤쪽 x값들의 영향을 뺀다.
             total = b.data[i][0]
 
             for j in range(i+1,self.cols):
                 total -= self.data[i][j]*x[j][0]
+
+            # 대각성분이 0이면 유일해를 구할 수 없다.
+            if abs(self.data[i][i]) < self.EPS:
+                raise ValueError("Zero diagonal entry. Unique solution does not exist.")
             
             x[i][0] = total/self.data[i][i] 
         
         return Matrix(x)
 
     def forward_substitution(self,b):
+        # Lower triangular matrix L에 대해 Ly = b를 푸는 함수이다.
+        # L은 위에서 아래 방향으로 해를 구한다.
+
         if not self.is_square():
             raise ValueError("Must be square. ")
         
@@ -773,21 +780,30 @@ class Matrix:
         if b.cols != 1:
             raise ValueError("b is must be column vector. ")
         if b.rows != self.rows:
-            raise ValueError("")
+            raise ValueError("Matrix and b must have the same number of rows.")
         
-        x = [[1] for i in range(self.rows)]
+        y = [[1] for i in range(self.rows)]
 
         for i in range(self.cols):
+            # 현재 식의 오른쪽 값에서 이미 구한 x 값들을 빼준다.
             total = b.data[i][0]
             for j in range(i):
-                total -= self.data[i][j]*x[j][0]
-            
-            x[i][0] = total/self.data[i][i]
+                total -= self.data[i][j]*y[j][0]
+
+            # 대각성분이 0이면 유일해를 구할 수 없다.
+            if abs(self.data[i][i]) < self.EPS:
+                raise ValueError("Zero diagonal entry. Unique solution does not exist.")
+
+            y[i][0] = total/self.data[i][i]
         
-        return Matrix(x)
+        return Matrix(y)
     
     
     def solve_lu(self,b):
+        # A = LU로 분해한 뒤 Ax = b를 푸는 함수이다.
+        # Ax = b
+        # LUx = b
+        # Ux = y 라고 두면 Ly = b, Ux = y 
         L, U = self.lu_decomposition()
         y = L.forward_substitution(b)
         x = U.back_substitution(y)

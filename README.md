@@ -33,9 +33,9 @@ Python으로 직접 구현한 행렬 연산 및 선형대수 알고리즘 라이
 
 - Augmented matrix
 - Analyze system
-  - unique solution
-  - no solution
-  - infinite solutions
+- unique solution
+- no solution
+- infinite solutions
 - Check solution existence
 - Solve system with a unique solution
 
@@ -58,6 +58,11 @@ Python으로 직접 구현한 행렬 연산 및 선형대수 알고리즘 라이
 
 - Gram-Schmidt process
 - QR decomposition
+- LU decomposition
+- Lower triangular check
+- Forward substitution
+- Back substitution
+- LU-based system solver
 
 ---
 
