@@ -63,6 +63,10 @@ Python으로 직접 구현한 행렬 연산 및 선형대수 알고리즘 라이
 - Forward substitution
 - Back substitution
 - LU-based system solver
+- LU decomposition without row swaps
+- Forward substitution
+- Back substitution
+- Solve linear systems using LU
 
 ---
 
@@ -78,7 +82,7 @@ Python으로 직접 구현한 행렬 연산 및 선형대수 알고리즘 라이
 ## How to tests
 
 ```bash
-python3 test_matrix.py
+python3 -m pytest -v
 
 ```
 

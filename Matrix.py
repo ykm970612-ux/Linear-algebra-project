@@ -227,23 +227,19 @@ class Matrix:
         C = self._copy_data()
         sign = 1
         for k in range(self.rows):
-            pivot = C[k][k] 
+        
+            pivot_row = k
 
-            #현재 열에서 0이 아닌 pivot 행을 찾는다.
-            if abs(pivot) < self.EPS: # float형 부동소수점오차를 방지하기 위한 eps. 
-                found = False
-                for i in range(k+1,self.rows):
-                    #만약 0이 아니라면 행교환을 하여 pivot행을 0이 아닌 값으로 수정한다.
-                    if C[i][k] != 0:
-                        found = True
-                        C[i] , C[k] = C[k], C[i]
+            for i in range(k + 1, self.rows):
+                if abs(C[i][k]) > abs(C[pivot_row][k]):
+                    pivot_row = i
 
-                    
-                        sign *= -1 # 행교환이 일어나면 부호가 반대가 된다.
-                        break
-                #0이 아닌 값을 찾지 못했다면 이 행렬의 행렬식은 0이다.
-                if not found:
-                    return 0
+            if abs(C[pivot_row][k]) < self.EPS:
+                return 0
+
+            if pivot_row != k:
+                C[pivot_row],C[k] = C[k],C[pivot_row]
+                sign *= -1
         
             #pivot 아래 성분들을 0으로 만들어 상삼각행렬을 만든다.
             #행렬은 한 행에서 다른행의 배수를 빼도 행렬식에는 변화가 없다.
@@ -261,10 +257,8 @@ class Matrix:
         
         return det
     def inverse(self): # 가우스-조르당 소거법 기반 역행렬 구하기
-        if self.determinant() == 0:
-            raise ValueError("The inverse matrix does not exist " \
-            "because the determinant is zero.")
-        
+        if not self.is_square():
+            raise ValueError("The inverse must be a square matrix.")
         # left는 A를 I로 바꿔가는 행렬이고,
         # right는 같은 행 연산을 적용해서 A의 역행렬이 되는 행렬이다.
         right = Matrix.identity(self.rows).data
@@ -272,23 +266,21 @@ class Matrix:
 
         
         for k in range(self.rows):
-            pivot = left[k][k]
-            
-            if pivot == 0:
-                found = False
-                for i in range(k+1,self.rows):
-                    if left[i][k] != 0:
-                        found = True
-                        left[i] , left[k] = left[k], left[i]
-                        right[i], right[k] = right[k], right[i]
-                        pivot = left[k][k]
-                        break
+            pivot_row = k
 
-                #행렬식이 0이면 행렬은 역행렬이 존재하지 않음(singular).
-                if not found:
+            for i in range(k+1,self.rows):
+                if abs(left[pivot_row][k]) < abs(left[i][k]):
+                    pivot_row = i
+
+            if abs(left[pivot_row][k]) < self.EPS:   
                     raise ValueError("The inverse matrix does not exist" \
                     " because the determinant is zero.")
+            if pivot_row != k:
+                left[pivot_row],left[k] = left[k],left[pivot_row]
+                right[pivot_row],right[k] = right[k], right[pivot_row]
+
             #pivot 행을 pivot으로 나누어 pivot값을 1로 만든다.
+            pivot = left[k][k]
             for j in range(self.rows):
                 left[k][j] = left[k][j] / pivot
                 right[k][j] = right[k][j] / pivot
@@ -809,6 +801,72 @@ class Matrix:
         x = U.back_substitution(y)
 
         return x
+
+    def plu_decomposition(self):
+        # 행교환을 허용하는 PLU
+        # 행교환을 기록하기 위한 행렬 P
+        # P.inverse A = LU --> A = PLU
+        if not self.is_square():
+            raise ValueError("Must be square. ")
+        U = self._copy_data()
+        L = Matrix.identity(self.rows).data
+        P = Matrix.identity(self.rows).data
+
+
+        for k in range(self.cols):
+            pivot_row = k
+
+            # 항상 pivot 값을 같은 행에서 최대값으로 선정한다.
+            for i in range(k + 1, self.rows):
+                if abs(U[i][k]) > abs(U[pivot_row][k]):
+                    pivot_row = i
+
+            if abs(U[pivot_row][k]) < self.EPS:
+                raise ValueError("Singular Matrix")
+        
+
+            # 행교환이 일어나면 행렬 P에 기록한다.
+            if pivot_row != k:
+                U[k], U[pivot_row] = U[pivot_row], U[k]
+                P[k], P[pivot_row] = P[pivot_row], P[k]
+
+                # 행렬 L에서 factor가 기록된 행의 요소만 교환한다.
+                for j in range(k):
+                    L[k][j], L[pivot_row][j] = L[pivot_row][j], L[k][j]
+
+            pivot = U[k][k]
+            for i in range(k+1,self.rows):
+
+                # i번째 행에서 k번째 pivot행을 몇배 빼야하는지 게산한다.
+                factor = U[i][k]/pivot
+                
+                L[i][k] = factor # <------# Ri <- Ri - factor * Rk 
+                
+                for j in range(k,self.cols):
+                    U[i][j] -= factor*U[k][j]
+        
+        return Matrix(P),Matrix(L),Matrix(U)
+
+
+    def solve_plu(self,b):
+            # A = PLU로 분해한 뒤 Ax = b를 푸는 함수이다.
+            # Ax = b
+            # LUx = Pb
+            # Ux = y 라고 두면 Ly = Pb, Ux = y 
+            P, L, U = self.plu_decomposition()
+            Pb = P@b
+            y = L.forward_substitution(Pb)
+            x = U.back_substitution(y)
+    
+            return x
+
+
+
+           
+            
+
+
+
 
 
 

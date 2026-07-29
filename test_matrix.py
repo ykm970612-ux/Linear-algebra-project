@@ -788,6 +788,204 @@ def test_constructor_copies_input_data():
     assert A.data[0][0] == 1
 
 
+def test_plu_decomposition():
+    test_cases = [
+        # 행교환이 필요 없는 경우
+        (
+            [
+                [4, 3],
+                [2, 1]
+            ],
+            [
+                [1, 0],
+                [0, 1]
+            ]
+        ),
+
+        # 첫 번째 단계에서 행교환
+        (
+            [
+                [0, 2],
+                [1, 3]
+            ],
+            [
+                [0, 1],
+                [1, 0]
+            ]
+        ),
+
+        # 소거 이후 단계에서 행교환
+        (
+            [
+                [4, 1, 1],
+                [2, 0, 1],
+                [1, 3, 1]
+            ],
+            [
+                [1, 0, 0],
+                [0, 0, 1],
+                [0, 1, 0]
+            ]
+        )
+    ]
+
+    for A_data, expected_P_data in test_cases:
+        A = Matrix(A_data)
+        original = Matrix(A_data)
+        expected_P = Matrix(expected_P_data)
+
+        P, L, U = A.plu_decomposition()
+
+        # 예상한 행교환인지 검사
+        assert P == expected_P
+
+        # PLU의 핵심 관계
+        assert P @ A == L @ U
+
+        # L과 U의 구조
+        assert L.is_lower_triangular()
+        assert U.is_upper_triangular()
+
+        # L의 대각 원소는 모두 1
+        for i in range(L.rows):
+            assert abs(L.data[i][i] - 1) < Matrix.EPS
+
+        # P가 순열행렬인지 검사
+        assert P @ P.transpose() == Matrix.identity(P.rows)
+
+        # 분해 과정에서 원본이 변경되지 않았는지 검사
+        assert A == original
+
+    # 특이행렬 검사
+    singular_A = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: singular_A.plu_decomposition()
+
+    )
+
+def test_solve_plu():
+    test_cases = [
+        # 행교환이 필요 없는 경우
+        (
+            [
+                [4, 3],
+                [2, 1]
+            ],
+            [
+                [1],
+                [2]
+            ]
+        ),
+
+        # 첫 pivot에서 행교환이 필요한 경우
+        (
+            [
+                [0, 2],
+                [1, 3]
+            ],
+            [
+                [1],
+                [2]
+            ]
+        ),
+
+        # 두 번째 pivot에서 행교환이 필요한 경우
+        (
+            [
+                [4, 1, 1],
+                [2, 0, 1],
+                [1, 3, 1]
+            ],
+            [
+                [1],
+                [2],
+                [3]
+            ]
+        )
+    ]
+
+    for A_data, expected_x_data in test_cases:
+        A = Matrix(A_data)
+        expected_x = Matrix(expected_x_data)
+
+        # 알고 있는 해를 이용해 b 생성
+        b = A @ expected_x
+
+        original_A = Matrix(A_data)
+        original_b = Matrix(b.data)
+
+        result = A.solve_plu(b)
+
+        # 예상한 해인지 검사
+        assert result == expected_x
+
+        # 실제로 Ax=b를 만족하는지 검사
+        assert A @ result == b
+
+        # RREF 기반 풀이와 같은지 검사
+        assert result == A.solve_unique(b)
+
+        # 원본 입력이 변경되지 않았는지 검사
+        assert A == original_A
+        assert b == original_b
+
+    # 특이행렬
+    singular_A = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    singular_b = Matrix([
+        [3],
+        [6]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: singular_A.solve_plu(singular_b)
+    )
+
+    # b가 열벡터가 아닌 경우
+    A = Matrix([
+        [1, 2],
+        [3, 4]
+    ])
+
+    row_b = Matrix([
+        [1, 2]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: A.solve_plu(row_b)
+    )
+
+    # A와 b의 행 개수가 다른 경우
+    wrong_size_b = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: A.solve_plu(wrong_size_b)
+    )
+
+    # b가 Matrix가 아닌 경우
+    assert_raises(
+        TypeError,
+        lambda: A.solve_plu([1, 2])
+    )
+
+    
+
+
 
 
 
