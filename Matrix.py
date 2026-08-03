@@ -306,17 +306,14 @@ class Matrix:
             if self.rows == row:
                 break
             
-            pivot_row = None
-            found = False
-            #0이 아닌 pivot행을 찾는다.
-            for i in range(row,self.rows):
-                if abs(C[i][col]) > self.EPS:
-                    found = True
-                    pivot_row = i
-                    break
+            pivot_row = row
             
+            #0이 아닌 최대값 pivot행을 찾는다.
+            for i in range(row,self.rows):
+                if abs(C[pivot_row][col]) < abs(C[i][col]):
+                    pivot_row = i
             #만약 찾지 못했다면 다음 열을 확인한다.
-            if not found:
+            if abs(C[pivot_row][col]) < self.EPS:
                 continue
 
             C[row], C[pivot_row] = C[pivot_row], C[row]
@@ -342,18 +339,13 @@ class Matrix:
             if row == self.rows:
                 break
 
-            pivot_row = None
-            found = False
-
-            #0이 아닌 pivot행을 찾는다.
+            pivot_row = row
+            
             for i in range(row,self.rows):
-                if abs(C[i][col]) > self.EPS:
+                if abs(C[pivot_row][col]) < abs(C[i][col]):
                     pivot_row = i
-                    found = True
-                    break
-
-            #만약 찾지 못했다면 다음 열을 확인한다.
-            if not found:
+                    
+            if abs(C[pivot_row][col]) < self.EPS:
                 continue
             
             C[pivot_row],C[row] = C[row],C[pivot_row]
@@ -859,6 +851,39 @@ class Matrix:
             x = U.back_substitution(y)
     
             return x
+
+    def null_space_basis(self):
+        RREF = self.rref()
+
+        pivot_cols = []
+        free_cols = []
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if abs(RREF.data[i][j]) > self.EPS:
+                    pivot_cols.append(j)
+                    break
+        for i in range(self.cols):
+            if i not in pivot_cols:
+                free_cols.append(i)
+
+        result = []
+
+        for col in free_cols:
+            vec = Matrix.zeros(self.cols,1)
+            vec.data[col][0] = 1
+            row = 0
+            for pivot in pivot_cols:
+                vec.data[pivot][0] = -RREF.data[row][col]
+                row += 1
+
+            result.append(vec)
+            
+        return result
+
+        
+
+        
+
 
 
 

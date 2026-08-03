@@ -986,7 +986,76 @@ def test_solve_plu():
     
 
 
+def test_null_space_basis():
+    def assert_column_vector_close(vector, expected, eps=1e-9):
+        assert vector.rows == len(expected)
+        assert vector.cols == 1
 
+        for i, value in enumerate(expected):
+            assert abs(vector.data[i][0] - value) < eps
 
+    def assert_is_null_vector(A, vector, eps=1e-9):
+        result = A.multiply(vector)
 
+        assert result.cols == 1
+        for i in range(result.rows):
+            assert abs(result.data[i][0]) < eps
 
+    # 1. 자유변수가 1개인 경우
+    A = Matrix([
+        [1, 2],
+        [2, 4]
+    ])
+
+    basis = A.null_space_basis()
+
+    assert len(basis) == 1
+    assert_column_vector_close(basis[0], [-2, 1])
+    assert_is_null_vector(A, basis[0])
+    assert len(basis) == A.cols - A.rank()
+
+    # 2. 자유변수가 2개인 경우
+    B = Matrix([
+        [1, 2, 3],
+        [2, 4, 6]
+    ])
+
+    basis = B.null_space_basis()
+
+    assert len(basis) == 2
+    assert_column_vector_close(basis[0], [-2, 1, 0])
+    assert_column_vector_close(basis[1], [-3, 0, 1])
+
+    for vector in basis:
+        assert_is_null_vector(B, vector)
+
+    assert len(basis) == B.cols - B.rank()
+
+    # 3. 가역행렬: 영공간이 {0}뿐이므로 기저는 빈 리스트
+    C = Matrix([
+        [1, 0],
+        [0, 1]
+    ])
+
+    basis = C.null_space_basis()
+
+    assert basis == []
+    assert len(basis) == C.cols - C.rank()
+
+    # 4. 영행렬: 모든 변수가 자유변수
+    D = Matrix([
+        [0, 0],
+        [0, 0]
+    ])
+
+    basis = D.null_space_basis()
+
+    assert len(basis) == 2
+    assert_column_vector_close(basis[0], [1, 0])
+    assert_column_vector_close(basis[1], [0, 1])
+
+    for vector in basis:
+        assert_is_null_vector(D, vector)
+
+    assert len(basis) == D.cols - D.rank()
+    
