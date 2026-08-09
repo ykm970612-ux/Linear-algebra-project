@@ -58,7 +58,7 @@ $$
 x=x_p+c_1v_1+\cdots+c_kv_k
 $$
 
-where \(x_p\) is a particular solution and \(v_1,\dots,v_k\) are basis vectors of the null space.
+where $x_p$ is a particular solution and $v_1,\dots,v_k$ are basis vectors of the null space.
 
 ### Least Squares
 
@@ -178,9 +178,9 @@ $$
 x=x_p+c_1v_1+\cdots+c_kv_k
 $$
 
-$
-where `particular` is \(x_p\) and `basis` contains \(v_1,\dots,v_k\).
-$
+
+where `particular` is $x_p$ and `basis` contains $v_1,\dots,v_k$.
+
 
 ### QR-based least squares
 
