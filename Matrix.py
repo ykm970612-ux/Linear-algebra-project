@@ -94,9 +94,9 @@ class Matrix:
 
         for i in range(self.rows):
             for j in range(self.cols):
-                if self.data[i][j] != self.data[j][i]:
+                if abs(self.data[i][j] - self.data[j][i])>self.EPS:
                     return False
-            return True
+        return True
         
     def is_zero(self):
         for i in range(self.rows):
@@ -970,9 +970,9 @@ class Matrix:
     # 현재 버젼에서는 허수를 표현하기에는 어렵기에 고유값이 실수인 대칭행렬만 가능.
     def dominant_eigenpair(self,initial_vector=None,max_iterations=1000,tolerance=1e-10):
         if not self.is_symmetric():
-            raise ValueError("A must be symetric.")
+            raise ValueError("A must be symmetric.")
         if not isinstance(max_iterations,int):
-            raise TypeError("max_interations must be intiger.")
+            raise TypeError("max_iterations must be integer.")
         if max_iterations <= 0:
             raise ValueError("max_iterations must be a positive integer.")
         if initial_vector is None :
