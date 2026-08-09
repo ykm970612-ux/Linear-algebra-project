@@ -54,9 +54,9 @@ Python으로 구현한 행렬 연산 및 선형대수 알고리즘 라이브러�
 
 For a system with solutions, the general solution is represented as
 
-\[
+$$
 x=x_p+c_1v_1+\cdots+c_kv_k
-\]
+$$
 
 where \(x_p\) is a particular solution and \(v_1,\dots,v_k\) are basis vectors of the null space.
 
@@ -70,9 +70,9 @@ where \(x_p\) is a particular solution and \(v_1,\dots,v_k\) are basis vectors o
 
 The QR-based least squares solver uses
 
-\[
+$$
 A=QR,\qquad R\hat{x}=Q^Tb
-\]
+$$
 
 and solves the upper triangular system using back substitution.
 
@@ -174,11 +174,13 @@ for vector in basis:
 
 The returned result represents
 
-\[
+$$
 x=x_p+c_1v_1+\cdots+c_kv_k
-\]
+$$
 
+$
 where `particular` is \(x_p\) and `basis` contains \(v_1,\dots,v_k\).
+$
 
 ### QR-based least squares
 
