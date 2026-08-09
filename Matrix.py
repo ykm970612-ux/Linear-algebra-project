@@ -967,6 +967,7 @@ class Matrix:
         return x_hat
     
     # 거듭제곱법
+    # 현재 버젼에서는 허수를 표현하기에는 어렵기에 고유값이 실수인 대칭행렬만 가능.
     def dominant_eigenpair(self,initial_vector=None,max_iterations=1000,tolerance=1e-10):
         if not self.is_symmetric():
             raise ValueError("A must be symetric.")
@@ -1005,6 +1006,7 @@ class Matrix:
             #잔차 계산
             R = Av_next.subtract(v_next.scalar_multiply(eigenvalue))
 
+            #수렴 확인
             if R.frobenius_norm()<tolerance:
                 return (eigenvalue,v_next)
             
