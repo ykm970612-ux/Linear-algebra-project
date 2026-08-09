@@ -916,12 +916,38 @@ class Matrix:
         for i in range(self.rows):
             for j in range(self.cols):
                 if abs(rref_augmented.data[i][j]) > self.EPS:
+                    # 자유변수가 0이면 피벗변수는 RREF 마지막 열의 값이 된다.
                     particular.data[j][0] = rref_augmented.data[i][-1]
                     break
         # 모든 해는 특정해와 영공간 벡터의 합:
         # x = particular + c1*v1 + ... + ck*vk
         return (particular,self.null_space_basis())
 
+    def least_squares_qr(self,b):
+
+        # Ax=b가 정의되려면 b는 A와 행 개수가 같은 열벡터여야 한다.
+        if not isinstance(b,Matrix):
+            raise TypeError("b must be Matrix.")
+        if b.cols != 1:
+            raise ValueError("b must be a column vector.")
+        if self.rows != b.rows:
+            raise ValueError("A and b must have same number of rows.")
+
+        # A는 tall 하거나 square 해야한다.
+        if self.rows < self.cols:
+            raise ValueError("A must be tall or square matrix.")
+        #A의 열들은 선형독립이려야 한다.
+        if not self.is_full_column_rank():
+            raise ValueError("A must have independent columns.")
+
+        Q,R = self.qr_decomposition()
+        qt_b = Q.transpose()@b
+
+        x_hat = R.back_substitution(qt_b)
+
+        return x_hat
+
+        
         
 
         
