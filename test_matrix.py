@@ -1058,4 +1058,105 @@ def test_null_space_basis():
         assert_is_null_vector(D, vector)
 
     assert len(basis) == D.cols - D.rank()
-    
+def test_solve_general():
+    def assert_column_vector_close(vector, expected, eps=1e-9):
+        assert vector.rows == len(expected)
+        assert vector.cols == 1
+
+        for i, value in enumerate(expected):
+            assert abs(vector.data[i][0] - value) < eps
+
+    def assert_matrix_product(A, x, expected, eps=1e-9):
+        result = A.multiply(x)
+        assert_column_vector_close(result, expected, eps)
+
+    # 1. 무한히 많은 해
+    A = Matrix([
+        [1, 2, 3],
+        [2, 4, 6]
+    ])
+
+    b = Matrix([
+        [4],
+        [8]
+    ])
+
+    particular, basis = A.solve_general(b)
+
+    # 자유변수를 모두 0으로 둔 특정해
+    assert_column_vector_close(particular, [4, 0, 0])
+    assert_matrix_product(A, particular, [4, 8])
+
+    # 영공간 기저
+    assert len(basis) == 2
+    assert_column_vector_close(basis[0], [-2, 1, 0])
+    assert_column_vector_close(basis[1], [-3, 0, 1])
+
+    for vector in basis:
+        assert_matrix_product(A, vector, [0, 0])
+
+    # 2. 유일해
+    A = Matrix([
+        [2, 1],
+        [1, -1]
+    ])
+
+    b = Matrix([
+        [5],
+        [1]
+    ])
+
+    particular, basis = A.solve_general(b)
+
+    assert_column_vector_close(particular, [2, 1])
+    assert_matrix_product(A, particular, [5, 1])
+    assert basis == []
+
+    # 3. 해가 없는 경우
+    A = Matrix([
+        [1, 1],
+        [2, 2]
+    ])
+
+    b = Matrix([
+        [1],
+        [3]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: A.solve_general(b)
+    )
+
+    # 4. b가 Matrix가 아닌 경우
+    A = Matrix([
+        [1, 0],
+        [0, 1]
+    ])
+
+    assert_raises(
+        TypeError,
+        lambda: A.solve_general([1, 2])
+    )
+
+    # 5. b가 열벡터가 아닌 경우
+    row_b = Matrix([
+        [1, 2]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: A.solve_general(row_b)
+    )
+
+    # 6. A와 b의 행 개수가 다른 경우
+    wrong_size_b = Matrix([
+        [1],
+        [2],
+        [3]
+    ])
+
+    assert_raises(
+        ValueError,
+        lambda: A.solve_general(wrong_size_b)
+    )

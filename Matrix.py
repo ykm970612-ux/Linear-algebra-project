@@ -853,25 +853,37 @@ class Matrix:
             return x
 
     def null_space_basis(self):
+
+        # Ax=0 의 헤 구조를 확인하기 위해 A를 RREF로 변환한다. 
         RREF = self.rref()
 
         pivot_cols = []
         free_cols = []
+
+        # 각 0이 아닌 행에서 첫 번째 0이 아닌 열을 찾아 피벗 열로 기록한다.
         for i in range(self.rows):
             for j in range(self.cols):
                 if abs(RREF.data[i][j]) > self.EPS:
                     pivot_cols.append(j)
                     break
+
+        # 피벗이 없는 열의 변수는 자유변수이다.
         for i in range(self.cols):
             if i not in pivot_cols:
                 free_cols.append(i)
 
         result = []
 
+        # 자유변수 하나마다 영공간의 독립적인 방향 하나를 만든다.
         for col in free_cols:
             vec = Matrix.zeros(self.cols,1)
+
+            # 현재 자유변수만 1로두고 나머지는 0으로 둔다.
             vec.data[col][0] = 1
             row = 0
+
+            # RREF에서 피벗은 1이므로 피벗변수는
+            # 현재 자유변수 계수의 음수로 결정된다.
             for pivot in pivot_cols:
                 vec.data[pivot][0] = -RREF.data[row][col]
                 row += 1
@@ -880,6 +892,39 @@ class Matrix:
             
         return result
 
+        
+    def solve_general(self,b):
+
+        # Ax=b가 정의되려면 b는 A와 행 개수가 같은 열벡터여야 한다.
+        if not isinstance(b,Matrix):
+            raise TypeError("b must be Matrix")
+        if b.cols != 1:
+            raise ValueError("b must be a column vector. ")
+        if self.rows != b.rows:
+            raise ValueError("A and b must have the same number of rows.")
+
+        # 확대행렬 [A|b]의 RREF를 이용해 해의 존재 여부와 구조를 확인한다.
+        status, rref_augmented = self.analyze_system(b)
+
+        # 모순행 [0 ... 0 | c]가 존재하면 Ax=b의 해가 없다.
+        if status == "no solution":
+            raise ValueError("The system has no solution.")
+
+        # 자유변수를 모두 0으로 둔 가장 간단한 특정해를 만든다
+        particular = Matrix.zeros(self.cols,1)
+
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if abs(rref_augmented.data[i][j]) > self.EPS:
+                    particular.data[j][0] = rref_augmented.data[i][-1]
+                    break
+        # 모든 해는 특정해와 영공간 벡터의 합:
+        # x = particular + c1*v1 + ... + ck*vk
+        return (particular,self.null_space_basis())
+
+        
+
+        
         
 
         
