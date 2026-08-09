@@ -87,6 +87,25 @@ class Matrix:
     
     def is_square(self): 
         return self.rows == self.cols
+
+    def is_symmetric(self):
+        if not self.is_square():
+            return False
+
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if self.data[i][j] != self.data[j][i]:
+                    return False
+            return True
+        
+    def is_zero(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if abs(self.data[i][j]) > self.EPS:
+                    return False
+
+        return True
+
             
     
     def frobenius_norm(self):
@@ -946,10 +965,53 @@ class Matrix:
         x_hat = R.back_substitution(qt_b)
 
         return x_hat
+    
+    # 거듭제곱법
+    def dominant_eigenpair(self,initial_vector=None,max_iterations=1000,tolerance=1e-10):
+        if not self.is_symmetric():
+            raise ValueError("A must be symetric.")
+        if not isinstance(max_iterations,int):
+            raise TypeError("max_interations must be intiger.")
+        if max_iterations <= 0:
+            raise ValueError("max_iterations must be a positive integer.")
+        if initial_vector is None :
+                initial_vector = Matrix([[1] for _ in range(self.rows)])
+        if tolerance <= 0:
+            raise ValueError("tolerance must be positive.")
+        if not isinstance(initial_vector,Matrix):
+            raise TypeError("initial_vector must be Matrix.")
+        if initial_vector.cols != 1:
+            raise ValueError("initial_vector must be a column vector.")
+        if initial_vector.rows != self.rows:
+            raise ValueError("initial_vector must have the same number of rows as A.")
+        if initial_vector.is_zero():
+            raise ValueError("Power iteration reached a zero vector.")
 
-        
-        
+        # 초기 벡터의 크기는 중요하지 않고 방향만 중요하기 때문에 정규화 시킨다.
+        v =  initial_vector.normalize()
 
+        for _ in range(max_iterations):
+            # 현재 벡터를 Av 로 변환.
+            w = self@v
+            # 영백터 라면 정규화할 수 없다.
+            if w.is_zero():
+                raise ValueError("Power iteration reached a zero vector. Choose a different initial vector.")
+            
+            v_next = w.normalize()
+            Av_next = self@v_next
+
+            #고유값 근사
+            eigenvalue = v_next.dot(Av_next)
+            #잔차 계산
+            R = Av_next.subtract(v_next.scalar_multiply(eigenvalue))
+
+            if R.frobenius_norm()<tolerance:
+                return (eigenvalue,v_next)
+            
+            v = v_next
+           
+
+        raise RuntimeError("Power iteration did not converge.")
         
         
 
